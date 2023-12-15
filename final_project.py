@@ -1,12 +1,13 @@
-import networkx as nx
 import tkinter as tk
 from tkinter import ttk
+import networkx as nx
 import math
 import matplotlib.pyplot as plt
 import json
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import textwrap
 import copy
+import time
 import os # can undo comments for savefig to save PNG files locally
 import random
 from datetime import datetime
@@ -35,7 +36,7 @@ Enter 3 to choose the spring layout\nEnter 4 to choose the spiral layout
 Enter 5 to choose the planar layout\n\nAny other input values will yield a planar layout. Choose a layout: """)
         compInput = input("\nFinally, please enter 1 to generate a single graph from a random comment tree, and enter 2 if you wish to generate graphs for all of the comment trees; this may take a few seconds: ")
         if compInput == '1':
-            plotObesityGraph(posts_with_comments[random.randint(0, len(posts_with_comments))], layout)
+            plotObesityGraph(posts_with_comments[random.randint(0, len(posts_with_comments)-1)], layout)
         elif compInput == '2':
             # calculate the number of rows and columns
             num_plots = len(posts_with_comments)
@@ -65,7 +66,7 @@ Enter 3 to choose the spring layout\nEnter 4 to choose the spiral layout
 Enter 5 to choose the planar layout (recommended)\n\nAny other input values will yield a planar layout. Choose a layout: """)
         compInput = input("\nFinally, please enter 1 to generate a single graph from a random comment tree, and enter 2 if you wish to generate graphs for all of the comment trees; this may take a few seconds: ")
         if compInput == '1':
-            plotFatGraph(fl_data[random.randint(0, len(fl_data))], layout)
+            plotFatGraph(fl_data[random.randint(0, len(fl_data)-1)], layout)
         elif compInput == '2':
             num_plots = len(fl_data)
             num_cols = math.ceil(math.sqrt(num_plots))
@@ -230,7 +231,6 @@ def plotObesityGraph(post_data, layout=5):
     node_colors = [G.nodes[node]["color"] for node in G.nodes]
     # get node labels based on 'label' attribute
     node_labels = {node: G.nodes[node]["label"] for node in G.nodes}
-    fig, ax = plt.subplots(figsize=(8, 6))
     nx.draw(
         G,
         pos,
@@ -241,25 +241,16 @@ def plotObesityGraph(post_data, layout=5):
         font_color="black",
         node_color=node_colors,
         edge_color="gray",
-        font_weight="bold",
-        ax=ax
+        font_weight="bold"
     )
-    # make Tkinter window
-    window = tk.Tk()
-    window.title(splitTitle(post_data["title"]))
-    # embed Matplotlib figure in the Tkinter window
-    canvas = FigureCanvasTkAgg(fig, master=window)
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    # add toolbar window
-    toolbar = ttk.Notebook(window)
-    # make toolbar expand horizontally and vertically to fill any excess space
-    toolbar.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    # runs an eventloop; listens for actions to happen via window or user interaction
-    window.mainloop()
-    # close matplotlib fig to prevent resource leaks
-    plt.close()
+    # save the plot with the post title (optional, can change basis for saving)
+    plt.title(splitTitle(post_data["title"]))
+    folder_path = "plot_graphs"
+    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
+    file_path = os.path.join(folder_path, f"{post_data['submission_id']}_graph.png")
+    # print(file_path)
+    # plt.savefig(file_path)
+    plt.show()
 
 def plotFatGraph(post_data, layout=5):
     '''plots a single graph based on a comment tree for a post in r/fatlogic and displays it via pop-up window.
@@ -290,28 +281,6 @@ def plotFatGraph(post_data, layout=5):
     node_sizes = [300 if node == root_id else 30 for node in G.nodes]
     # only label root node w unique post ID
     node_labels = {node: G.nodes[node]["label"] if node == root_id else "" for node in G.nodes}
-    # nx.draw(
-    #     G,
-    #     pos,
-    #     labels=node_labels,
-    #     with_labels=True,
-    #     font_size=8,
-    #     font_color="black",
-    #     node_color=node_colors,
-    #     node_size=node_sizes,
-    #     edge_color="gray",
-    #     font_weight="bold",
-    # )
-
-    # # save the plot with the post title (optional, can change basis for saving)
-    # plt.title(splitTitle(post_data["title"]))
-    # folder_path = "plot_graphs"
-    # os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
-    # file_path = os.path.join(folder_path, f"{post_data['submission_id']}_graph.png")
-    # # print(file_path)
-    # # plt.savefig(file_path)
-    # plt.show()
-    fig, ax = plt.subplots(figsize=(8, 6))
     nx.draw(
         G,
         pos,
@@ -323,24 +292,16 @@ def plotFatGraph(post_data, layout=5):
         node_size=node_sizes,
         edge_color="gray",
         font_weight="bold",
-        ax=ax
     )
-    # make Tkinter window
-    window = tk.Tk()
-    window.title(splitTitle(post_data["title"]))
-    # embed Matplotlib figure in the Tkinter window
-    canvas = FigureCanvasTkAgg(fig, master=window)
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    # add toolbar window
-    toolbar = ttk.Notebook(window)
-    toolbar.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    # runs an eventloop; listens for actions to happen via window or user interaction
-    window.mainloop()
-    # close matplotlib fig to prevent resource leaks
-    plt.close()
+    # save the plot with the post title (optional, can change basis for saving)
+    plt.title(splitTitle(post_data["title"]))
+    folder_path = "plot_graphs"
+    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
+    file_path = os.path.join(folder_path, f"{post_data['submission_id']}_graph.png")
+    # print(file_path)
+    # plt.savefig(file_path)
+    plt.show()
 
 def plotObesityMany(post_data, ax, layout=5):
     '''draws plots from a r/obesity comment tree; meant for creating multiple graphs.
@@ -456,8 +417,8 @@ def findThreadDepth(comment):
         the maximum depth of the comment tree
     '''
     if 'comments' not in comment:
-        return 0
-    max_depth = 0
+        return 1
+    max_depth = 1
     for reply in comment['comments']:
         depth = 1 + findThreadDepth(reply)
         max_depth = max(max_depth, depth)
