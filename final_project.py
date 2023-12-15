@@ -1,13 +1,12 @@
-import tkinter as tk
-from tkinter import ttk
+# import tkinter as tk
+# from tkinter import ttk
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import networkx as nx
 import math
 import matplotlib.pyplot as plt
 import json
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import textwrap
 import copy
-import time
 import os # can undo comments for savefig to save PNG files locally
 import random
 from datetime import datetime
