@@ -41,20 +41,16 @@ Enter 5 to choose the planar layout\n\nAny other input values will yield a plana
             num_plots = len(posts_with_comments)
             num_cols = math.ceil(math.sqrt(num_plots))
             num_rows = math.ceil(num_plots / num_cols)
-
             # make figure with multiple subplots
             fig, axs = plt.subplots(num_rows, num_cols, figsize=(200, 150))
-
             # add each graph via axes index
             for i, p in enumerate(posts_with_comments):
                 row = i // num_cols  # get floor for row
                 col = i % num_cols
                 plotObesityMany(p, axs[row, col], layout)
-
             # remove empty subplot(s)
             for i in range(num_plots, num_rows * num_cols):
                 fig.delaxes(axs.flatten()[i])
-
             # adjust layout and display the combined figure
             plt.subplots_adjust(wspace=0.3, hspace=0.5)  # spacing between subplots
             plt.tight_layout()
@@ -98,7 +94,7 @@ def buildCommentTree(comments):
     Returns
     -------------------
     tree: dictionary
-        a dictionary with nested tree structrues
+        a dictionary with nested tree structures
     '''
     tree = []
     di = {}
@@ -124,11 +120,11 @@ def buildCommentTree(comments):
             parent["comments"].append(di[comment_id])
     return tree
 
-# Load JSON data from file (obesity)
+# load JSON data from file (obesity)
 with open("json_data/top_comment_data.json", "r", encoding="UTF-8") as file:
     o_data = json.load(file)
 
-# Load JSON data from file (fatlogic)
+# load JSON data from file (fatlogic)
 with open("json_data/fat_logic_comment_data.json", "r", encoding="UTF-8") as file:
     fl_data = json.load(file)
 
@@ -144,18 +140,42 @@ posts_with_comments = [post for post in o_data if 'comments' in post and post['c
 
 def convert_timestamp(timestamp):
     '''converts unix datetime value to yyyy-mm-dd (optional in project)
+    Parameters
+    -------------------
+    timestamp: float
+        a unix time value
+    Returns
+    -------------------
+    the converted unix datetime in yyyy-mm-dd format
     '''
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
 
 def splitTitle(title, max_width=75):
     '''breaks up post titles that are too long by setting the width limit to 75 characters
-    
+    Parameters
+    -------------------
+    title: string
+        the title of the reddit post
+    Returns
+    -------------------
+    wrapped titLe: string
+        a title that goes to the next line every time it reaches 75 characters
     '''
     # Use textwrap to wrap the title at spaces
     wrapped_title = textwrap.fill(title, width=max_width)
     return wrapped_title
 
 def addNodesObesity(G, comment):
+    '''recursively adds nodes and edges for comments and their collapsed comments for r/obesity to add nodes of the correct color
+    Parameters
+    -------------------
+    G: networkx graph
+        a directional graph to represent the hierarchy between a post and its comments
+    Returns
+    -------------------
+    comment: a (possibly nested) dictionary
+        a dictionary that may have a list of child dictionaries
+    '''
     # Recursively add nodes and edges for comments and their replies
     for reply in comment.get("comments", []):
         # set other node colors to cadetblue
@@ -164,6 +184,16 @@ def addNodesObesity(G, comment):
         addNodesObesity(G, reply)
 
 def addNodesFat(G, comment):
+    '''recursively adds nodes and edges for comments and their collapsed comments for r/fatlogic to add nodes of the correct color
+    Parameters
+    -------------------
+    G: networkx graph
+        a directional graph to represent the hierarchy between a post and its comments
+    Returns
+    -------------------
+    comment: a (possibly nested) dictionary
+        a dictionary that may have a list of child dictionaries
+    '''
     # Recursively add nodes and edges for comments and their replies
     for reply in comment.get("comments", []):
         # set other nodes color to delft blue
@@ -172,11 +202,21 @@ def addNodesFat(G, comment):
         addNodesFat(G, reply)
 
 def plotObesityGraph(post_data, layout=5):
-    '''plot a graph based on a comment tree for a post in r/obesity
+    '''plots a single graph based on a comment tree for a post in r/obesity and displays it via pop-up window.
+        The pop-up window comes with a somewhat interactive tool bar.
+    Parameters
+    -------------------
+    post_data: list
+        a list of dictionaries containing comment trees
+    layout: int
+        an integer which decides the layout of the comment graph
+    Returns
+    -------------------
+    None
     '''
     G = nx.DiGraph()
     # add root node for the post
-    root_id = post_data["submission_id"]
+    root_id = findMaxDepth(post_data['comments'])
     G.add_node(root_id, label=root_id, color="palevioletred")  # set root node color
     # add edges from the post to top-level comments
     for comment in post_data.get("comments", []):
@@ -222,10 +262,21 @@ def plotObesityGraph(post_data, layout=5):
     plt.close()
 
 def plotFatGraph(post_data, layout=5):
-    '''plot a graph based on a comment tree for a post in r/fatlogic
+    '''plots a single graph based on a comment tree for a post in r/fatlogic and displays it via pop-up window.
+        The pop-up window comes with a somewhat interactive tool bar.
+    Parameters
+    -------------------
+    post_data: list
+        a list of dictionaries containing comment trees
+    layout: int
+        an integer which decides the layout of the comment graph
+    Returns
+    -------------------
+    None
     '''
     G = nx.DiGraph()
-    root_id = post_data["submission_id"]
+    # root_id = post_data["submission_id"]
+    root_id = findMaxDepth(post_data['comments'])
     G.add_node(root_id, label=root_id, color="#E4572E")
     for comment in post_data.get("comments", []):
         # set color for nodes surrounding root node
@@ -267,7 +318,7 @@ def plotFatGraph(post_data, layout=5):
         labels=node_labels,
         with_labels=True,
         font_size=8,
-        font_color="black",
+        font_color="white",
         node_color=node_colors,
         node_size=node_sizes,
         edge_color="gray",
@@ -292,7 +343,21 @@ def plotFatGraph(post_data, layout=5):
     plt.close()
 
 def plotObesityMany(post_data, ax, layout=5):
-    '''draws plots from a r/obesity comment tree; meant for creating multiple graphs
+    '''draws plots from a r/obesity comment tree; meant for creating multiple graphs.
+        A combined graph will be presented.
+    plots a single graph based on a comment tree for a post in r/obesity and displays it via pop-up window.
+        The pop-up window comes with a somewhat interactive tool bar.
+    Parameters
+    -------------------
+    post_data: list
+        a list of dictionaries containing comment trees
+    ax: matplotlib subplot
+        a subplot that the graph will be placed into 
+    layout: int
+        an integer which decides the layout of the comment graph
+    Returns
+    -------------------
+    None
     '''
     G = nx.DiGraph()
     root_id = post_data["submission_id"]
@@ -317,7 +382,21 @@ def plotObesityMany(post_data, ax, layout=5):
     # ax.set_title(splitTitle(post_data["title"]), fontsize=4)
 
 def plotFatMany(post_data, ax, layout=5):
-    '''draws plots from a r/fatlogic comment tree; meant for creating multiple graphs
+    '''draws plots from a r/fatlogic comment tree; meant for creating multiple graphs.
+        A combined graph will be presented.
+    plots a single graph based on a comment tree for a post in r/obesity and displays it via pop-up window.
+        The pop-up window comes with a somewhat interactive tool bar.
+    Parameters
+    -------------------
+    post_data: list
+        a list of dictionaries containing comment trees
+    ax: matplotlib subplot
+        a subplot that the graph will be placed into 
+    layout: int
+        an integer which decides the layout of the comment graph
+    Returns
+    -------------------
+    None
     '''
     G = nx.DiGraph()
     root_id = post_data["submission_id"]
@@ -343,6 +422,15 @@ def plotFatMany(post_data, ax, layout=5):
 
 def pickLayout(graph, layout):
     '''returns the chosen graph layout for drawing
+    Parameters
+    -------------------
+    graph: networkx graph
+        a graph to which a layout will be applied
+    layout: string
+        a string to specify which layout to use
+    Returns
+    -------------------
+    None
     '''
     if layout == '1':
         return nx.kamada_kawai_layout(graph)
@@ -355,6 +443,44 @@ def pickLayout(graph, layout):
     else:
         # default layout
         return nx.planar_layout(graph)
+
+def findThreadDepth(comment):
+    '''finds the maximum depth of a single comment thread
+    Parameters
+    -------------------
+    comment: dictionary
+        a dictionary containing comment contents and other information
+    Returns
+    -------------------
+    max_depth: int
+        the maximum depth of the comment tree
+    '''
+    if 'comments' not in comment:
+        return 0
+    max_depth = 0
+    for reply in comment['comments']:
+        depth = 1 + findThreadDepth(reply)
+        max_depth = max(max_depth, depth)
+
+    return max_depth
+
+def findMaxDepth(comment_trees):
+    '''finds the maximum depth among all comment threads in a post
+    Parameters
+    -------------------
+    comment_tree: list
+        a list containing dictionaries that represent comments
+    Returns
+    -------------------
+    max_depth: int
+        the maximum depth of the comment tree
+    '''
+    max_depth = 0
+    for tree in comment_trees:
+        tree_max = findThreadDepth(tree)
+        max_depth = max(max_depth, tree_max)
+
+    return max_depth
 
 # actually run main
 if __name__ == '__main__':
