@@ -7,47 +7,56 @@ import json
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import textwrap
 import copy
-import os
+import os # can undo comments for savefig to save PNG files locally
 import random
 from datetime import datetime
 
 # define main function to take user input and determine the type of plot to draw
 def main():
     '''The entry point for generating a graph from comment trees of posts
+        First, the user is prompted to choose a subreddit comment sample from which they would like to generate
+        images. Then, they are prompted to choosee a layout format for generating image(s). Finally, they
+        are asked if they wish to randomly generate a single graph from one post in their chosen comment sample,
+        or generate a combined image with graphs of all posts.
+    Parameters
+    -------------------
+    None
+    Returns
+    -------------------
+    None
     '''
-    uInput = input(""" ☆ Hello, please choose a subreddit sample from which you would like to generate images ★\n
+    uInput = input(""" ☆ Hello, please choose a subreddit comment sample from which you would like to generate images ★\n
 Enter 1 to choose r/Obesity\nEnter 2 to choose r/Fatlogic\n\nChoose a subreddit: """)
     # generate for r/Obesity
     if uInput == '1':
         layout = input("""\nNow, please choose the layout format for your image(s).\n
-Enter 1 to choose the Kamada_Kawai layout\nEnter 2 to choose the shell layout
+Enter 1 to choose the Kamada Kawai layout\nEnter 2 to choose the shell layout
 Enter 3 to choose the spring layout\nEnter 4 to choose the spiral layout
 Enter 5 to choose the planar layout\n\nAny other input values will yield a planar layout. Choose a layout: """)
-        compInput = input("""\nFinally, please enter 1 to generate a single graph from a random comment tree, and
-enter 2 if you wish to generate graphs for all of the comment trees: """)
+        compInput = input("\nFinally, please enter 1 to generate a single graph from a random comment tree, and enter 2 if you wish to generate graphs for all of the comment trees; this may take a few seconds: ")
         if compInput == '1':
             plotObesityGraph(posts_with_comments[random.randint(0, len(posts_with_comments))], layout)
         elif compInput == '2':
-            # Calculate the number of rows and columns
+            # calculate the number of rows and columns
             num_plots = len(posts_with_comments)
             num_cols = math.ceil(math.sqrt(num_plots))
             num_rows = math.ceil(num_plots / num_cols)
 
-            # Create a figure with multiple subplots
+            # make figure with multiple subplots
             fig, axs = plt.subplots(num_rows, num_cols, figsize=(200, 150))
 
-            # Plot each graph onto a subplot
+            # add each graph via axes index
             for i, p in enumerate(posts_with_comments):
                 row = i // num_cols  # get floor for row
                 col = i % num_cols
                 plotObesityMany(p, axs[row, col], layout)
 
-            # Remove empty subplot(s)
+            # remove empty subplot(s)
             for i in range(num_plots, num_rows * num_cols):
                 fig.delaxes(axs.flatten()[i])
 
-            # Adjust layout and display the combined figure
-            plt.subplots_adjust(wspace=0.3, hspace=0.5)  # Adjust spacing between subplots
+            # adjust layout and display the combined figure
+            plt.subplots_adjust(wspace=0.3, hspace=0.5)  # spacing between subplots
             plt.tight_layout()
             plt.show()
         else:
@@ -55,11 +64,10 @@ enter 2 if you wish to generate graphs for all of the comment trees: """)
     # generate for r/Fatlogic
     elif uInput == '2':
         layout = input("""\nNow, please choose the layout format for your image(s).\n
-Enter 1 to choose the Kamada_Kawai layout\nEnter 2 to choose the shell layout
+Enter 1 to choose the Kamada Kawai layout (recommended)\nEnter 2 to choose the shell layout
 Enter 3 to choose the spring layout\nEnter 4 to choose the spiral layout
-Enter 5 to choose the planar layout\n\nAny other input values will yield a planar layout. Choose a layout: """)
-        compInput = input("""\nFinally, please enter 1 to generate a single graph from a random comment tree, and
-enter 2 if you wish to generate graphs for all of the comment trees: """)
+Enter 5 to choose the planar layout (recommended)\n\nAny other input values will yield a planar layout. Choose a layout: """)
+        compInput = input("\nFinally, please enter 1 to generate a single graph from a random comment tree, and enter 2 if you wish to generate graphs for all of the comment trees; this may take a few seconds: ")
         if compInput == '1':
             plotFatGraph(fl_data[random.randint(0, len(fl_data))], layout)
         elif compInput == '2':
@@ -197,8 +205,8 @@ def plotObesityGraph(post_data, layout=5):
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
     # add toolbar window
     toolbar = ttk.Notebook(window)
+    # make toolbar expand horizontally and vertically to fill any excess space
     toolbar.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
     # runs an eventloop; listens for actions to happen via window or user interaction
     window.mainloop()
@@ -316,14 +324,14 @@ def plotFatMany(post_data, ax, layout=5):
         G,
         pos,
         font_size=8,
-        node_size=30,
+        node_size=10,
         font_color="black",
         node_color=node_colors,
         edge_color="gray",
         font_weight="bold",
         ax=ax
     )
-    ax.set_title(splitTitle(post_data["title"]))
+    ax.set_title(splitTitle(post_data["title"]), fontsize=8)
 
 def pickLayout(graph, layout):
     '''returns the chosen graph layout for drawing
