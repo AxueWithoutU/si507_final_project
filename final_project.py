@@ -91,6 +91,14 @@ Enter 5 to choose the planar layout (recommended)\n\nAny other input values will
 
 def buildCommentTree(comments):
     '''takes a list of dictionaries containing reddit comment data and nests them so that they form a tree
+    Parameters
+    -------------------
+    comments: list
+        a list of dictionaries containing reddit comment data
+    Returns
+    -------------------
+    tree: dictionary
+        a dictionary with nested tree structrues
     '''
     tree = []
     di = {}
